@@ -97,6 +97,10 @@ ${current.time}
 		</subant>
 		<subant target="package">
 			<property name="version" value="${git.tag}" />
+			<fileset dir="plugins/pinot-reportal" includes="build.xml" />
+		</subant>
+		<subant target="package">
+			<property name="version" value="${git.tag}" />
 			<fileset dir="plugins/jobsummary" includes="build.xml" />
 		</subant>
 	</target>
@@ -125,6 +129,10 @@ ${current.time}
 		<subant target="package">
 			<property name="version" value="${git.tag}" />
 			<fileset dir="plugins/reportal" includes="build.xml" />
+		</subant>
+		<subant target="package">
+			<property name="version" value="${git.tag}" />
+			<fileset dir="plugins/pinot-reportal" includes="build.xml" />
 		</subant>
 		<subant target="package">
 			<property name="version" value="${git.tag}" />
