@@ -51,387 +51,453 @@ import azkaban.viewer.pinot.reportal.ReportalMailCreator;
 import azkaban.viewer.pinot.reportal.ReportalTypeManager;
 
 public class Reportal {
-  public static final String ACCESS_LIST_SPLIT_REGEX = "\\s*,\\s*|\\s*;\\s*|\\s+";
+	public static final String ACCESS_LIST_SPLIT_REGEX = "\\s*,\\s*|\\s*;\\s*|\\s+";
 
-  public String reportalUser;
-  public String ownerEmail;
+	public String reportalUser;
+	public String ownerEmail;
 
-  public String title;
-  public String description;
+	public String title;
+	public String description;
 
-  public List<Query> queries;
-  public List<Variable> variables;
-  public List<Variable> pinotConfigs;
+	public List<Query> queries;
+	public List<Variable> variables;
+	public List<Variable> pinotConfigs;
 
-  public String optionalPinotConfigs;
-  public boolean schedule;
-  public String scheduleHour;
-  public String scheduleMinute;
-  public String scheduleAmPm;
-  public String scheduleTimeZone;
-  public String scheduleDate;
-  public boolean scheduleRepeat;
-  public String scheduleIntervalQuantity;
-  public String scheduleInterval;
+	public String optionalPinotConfigs;
+	public boolean schedule;
+	public String scheduleHour;
+	public String scheduleMinute;
+	public String scheduleAmPm;
+	public String scheduleTimeZone;
+	public String scheduleDate;
+	public boolean scheduleRepeat;
+	public String scheduleIntervalQuantity;
+	public String scheduleInterval;
 
-  public String accessViewer;
-  public String accessExecutor;
-  public String accessOwner;
+	public String accessViewer;
+	public String accessExecutor;
+	public String accessOwner;
 
-  public String notifications;
-  public String failureNotifications;
+	public String notifications;
+	public String failureNotifications;
 
-  public Project project;
+	public Project project;
 
-  public void saveToProject(Project project) {
-    this.project = project;
+	public void saveToProject(Project project) {
+		this.project = project;
 
-    project.getMetadata().put("reportal-user", reportalUser);
-    project.getMetadata().put("owner-email", ownerEmail);
+		project.getMetadata().put("reportal-user", reportalUser);
+		project.getMetadata().put("owner-email", ownerEmail);
 
-    project.getMetadata().put("title", title);
-    project.setDescription(description);
+		project.getMetadata().put("title", title);
+		project.setDescription(description);
 
-    project.getMetadata().put("schedule", schedule);
-    project.getMetadata().put("scheduleHour", scheduleHour);
-    project.getMetadata().put("scheduleMinute", scheduleMinute);
-    project.getMetadata().put("scheduleAmPm", scheduleAmPm);
-    project.getMetadata().put("scheduleTimeZone", scheduleTimeZone);
-    project.getMetadata().put("scheduleDate", scheduleDate);
-    project.getMetadata().put("scheduleRepeat", scheduleRepeat);
-    project.getMetadata().put("scheduleIntervalQuantity", scheduleIntervalQuantity);
-    project.getMetadata().put("scheduleInterval", scheduleInterval);
+		project.getMetadata().put("schedule", schedule);
+		project.getMetadata().put("scheduleHour", scheduleHour);
+		project.getMetadata().put("scheduleMinute", scheduleMinute);
+		project.getMetadata().put("scheduleAmPm", scheduleAmPm);
+		project.getMetadata().put("scheduleTimeZone", scheduleTimeZone);
+		project.getMetadata().put("scheduleDate", scheduleDate);
+		project.getMetadata().put("scheduleRepeat", scheduleRepeat);
+		project.getMetadata().put("scheduleIntervalQuantity",
+				scheduleIntervalQuantity);
+		project.getMetadata().put("scheduleInterval", scheduleInterval);
 
-    project.getMetadata().put("accessViewer", accessViewer);
-    project.getMetadata().put("accessExecutor", accessExecutor);
-    project.getMetadata().put("accessOwner", accessOwner);
+		project.getMetadata().put("accessViewer", accessViewer);
+		project.getMetadata().put("accessExecutor", accessExecutor);
+		project.getMetadata().put("accessOwner", accessOwner);
 
-    project.getMetadata().put("queryNumber", queries.size());
-    for (int i = 0; i < queries.size(); i++) {
-      Query query = queries.get(i);
-      project.getMetadata().put("query" + i + "title", query.title);
-      project.getMetadata().put("query" + i + "type", query.type);
-      project.getMetadata().put("query" + i + "script", query.script);
-    }
+		project.getMetadata().put("queryNumber", queries.size());
+		for (int i = 0; i < queries.size(); i++) {
+			Query query = queries.get(i);
+			project.getMetadata().put("query" + i + "title", query.title);
+			project.getMetadata().put("query" + i + "type", query.type);
+			project.getMetadata().put("query" + i + "param", query.param);
+			project.getMetadata().put("query" + i + "script", query.script);
 
-    project.getMetadata().put("variableNumber", variables.size());
-    for (int i = 0; i < variables.size(); i++) {
-      Variable variable = variables.get(i);
-      project.getMetadata().put("variable" + i + "title", variable.title);
-      project.getMetadata().put("variable" + i + "name", variable.name);
-    }
+		}
 
-    project.getMetadata().put("pinotConfigNumber", pinotConfigs.size());
-    for (int i = 0; i < pinotConfigs.size(); i++) {
-      Variable variable = pinotConfigs.get(i);
-      project.getMetadata().put("pinotConfig" + i + "title", variable.title);
-      project.getMetadata().put("pinotConfig" + i + "name", variable.name);
-    }
+		project.getMetadata().put("variableNumber", variables.size());
+		for (int i = 0; i < variables.size(); i++) {
+			Variable variable = variables.get(i);
+			project.getMetadata().put("variable" + i + "title", variable.title);
+			project.getMetadata().put("variable" + i + "name", variable.name);
+		}
 
-    project.getMetadata().put("optionalPinotConfigs", optionalPinotConfigs);
-    project.getMetadata().put("notifications", notifications);
-    project.getMetadata().put("failureNotifications", failureNotifications);
-  }
+		project.getMetadata().put("pinotConfigNumber", pinotConfigs.size());
+		for (int i = 0; i < pinotConfigs.size(); i++) {
+			Variable variable = pinotConfigs.get(i);
+			project.getMetadata().put("pinotConfig" + i + "title",
+					variable.title);
+			project.getMetadata()
+					.put("pinotConfig" + i + "name", variable.name);
+		}
 
-  public void removeSchedules(ScheduleManager scheduleManager) throws ScheduleManagerException {
-    List<Flow> flows = project.getFlows();
-    for (Flow flow: flows) {
-      Schedule sched = scheduleManager.getSchedule(project.getId(), flow.getId());
-      if (sched != null) {
-        scheduleManager.removeSchedule(sched);
-      }
-    }
-  }
+		project.getMetadata().put("optionalPinotConfigs", optionalPinotConfigs);
+		project.getMetadata().put("notifications", notifications);
+		project.getMetadata().put("failureNotifications", failureNotifications);
+	}
 
-  public void updateSchedules(Reportal report, ScheduleManager scheduleManager, User user, Flow flow) throws ScheduleManagerException {
-    // Clear previous schedules
-    removeSchedules(scheduleManager);
-    // Add new schedule
-    if (schedule) {
-      int hour = (Integer.parseInt(scheduleHour) % 12) + (scheduleAmPm.equalsIgnoreCase("pm") ? 12 : 0);
-      int minute = Integer.parseInt(scheduleMinute) % 60;
-      DateTimeZone timeZone = scheduleTimeZone.equalsIgnoreCase("UTC") ? DateTimeZone.UTC : DateTimeZone.getDefault();
-      DateTime firstSchedTime = DateTimeFormat.forPattern("MM/dd/yyyy").withZone(timeZone).parseDateTime(scheduleDate);
-      firstSchedTime = firstSchedTime.withHourOfDay(hour).withMinuteOfHour(minute).withSecondOfMinute(0).withMillisOfSecond(0);
+	public void removeSchedules(ScheduleManager scheduleManager)
+			throws ScheduleManagerException {
+		List<Flow> flows = project.getFlows();
+		for (Flow flow : flows) {
+			Schedule sched = scheduleManager.getSchedule(project.getId(),
+					flow.getId());
+			if (sched != null) {
+				scheduleManager.removeSchedule(sched);
+			}
+		}
+	}
 
-      ReadablePeriod period = null;
-      if (scheduleRepeat) {
-        int intervalQuantity = Integer.parseInt(scheduleIntervalQuantity);
+	public void updateSchedules(Reportal report,
+			ScheduleManager scheduleManager, User user, Flow flow)
+			throws ScheduleManagerException {
+		// Clear previous schedules
+		removeSchedules(scheduleManager);
+		// Add new schedule
+		if (schedule) {
+			int hour = (Integer.parseInt(scheduleHour) % 12)
+					+ (scheduleAmPm.equalsIgnoreCase("pm") ? 12 : 0);
+			int minute = Integer.parseInt(scheduleMinute) % 60;
+			DateTimeZone timeZone = scheduleTimeZone.equalsIgnoreCase("UTC") ? DateTimeZone.UTC
+					: DateTimeZone.getDefault();
+			DateTime firstSchedTime = DateTimeFormat.forPattern("MM/dd/yyyy")
+					.withZone(timeZone).parseDateTime(scheduleDate);
+			firstSchedTime = firstSchedTime.withHourOfDay(hour)
+					.withMinuteOfHour(minute).withSecondOfMinute(0)
+					.withMillisOfSecond(0);
 
-        if (scheduleInterval.equals("y")) {
-          period = Years.years(intervalQuantity);
-        }
-        else if (scheduleInterval.equals("m")) {
-          period = Months.months(intervalQuantity);
-        }
-        else if (scheduleInterval.equals("w")) {
-          period = Weeks.weeks(intervalQuantity);
-        }
-        else if (scheduleInterval.equals("d")) {
-          period = Days.days(intervalQuantity);
-        }
-        else if (scheduleInterval.equals("h")) {
-          period = Hours.hours(intervalQuantity);
-        }
-        else if (scheduleInterval.equals("M")) {
-          period = Minutes.minutes(intervalQuantity);
-        }
-      }
+			ReadablePeriod period = null;
+			if (scheduleRepeat) {
+				int intervalQuantity = Integer
+						.parseInt(scheduleIntervalQuantity);
 
-      ExecutionOptions options = new ExecutionOptions();
-      options.getFlowParameters().put("reportal.execution.user", user.getUserId());
-      options.setMailCreator(ReportalMailCreator.REPORTAL_MAIL_CREATOR);
-      options.getFlowParameters().put("reportal.title", report.title);
+				if (scheduleInterval.equals("y")) {
+					period = Years.years(intervalQuantity);
+				} else if (scheduleInterval.equals("m")) {
+					period = Months.months(intervalQuantity);
+				} else if (scheduleInterval.equals("w")) {
+					period = Weeks.weeks(intervalQuantity);
+				} else if (scheduleInterval.equals("d")) {
+					period = Days.days(intervalQuantity);
+				} else if (scheduleInterval.equals("h")) {
+					period = Hours.hours(intervalQuantity);
+				} else if (scheduleInterval.equals("M")) {
+					period = Minutes.minutes(intervalQuantity);
+				}
+			}
 
-      scheduleManager.scheduleFlow(-1, project.getId(), project.getName(), flow.getId(), "ready",
-          firstSchedTime.getMillis(), firstSchedTime.getZone(), period, DateTime.now().getMillis(),
-          firstSchedTime.getMillis(), firstSchedTime.getMillis(), user.getUserId(), options, null);
-    }
-  }
+			ExecutionOptions options = new ExecutionOptions();
+			options.getFlowParameters().put("reportal.execution.user",
+					user.getUserId());
+			options.setMailCreator(ReportalMailCreator.REPORTAL_MAIL_CREATOR);
+			options.getFlowParameters().put("reportal.title", report.title);
 
-  public void updatePermissions() {
-    // Save permissions
-    String[] accessViewerList = accessViewer.trim().split(ACCESS_LIST_SPLIT_REGEX);
-    String[] accessExecutorList = accessExecutor.trim().split(ACCESS_LIST_SPLIT_REGEX);
-    String[] accessOwnerList = accessOwner.trim().split(ACCESS_LIST_SPLIT_REGEX);
-    // Prepare permission types
-    Permission admin = new Permission();
-    admin.addPermission(Type.READ);
-    admin.addPermission(Type.EXECUTE);
-    admin.addPermission(Type.ADMIN);
-    Permission executor = new Permission();
-    executor.addPermission(Type.READ);
-    executor.addPermission(Type.EXECUTE);
-    Permission viewer = new Permission();
-    viewer.addPermission(Type.READ);
-    // Sets the permissions
-    project.clearUserPermission();
-    for (String user: accessViewerList) {
-      user = user.trim();
-      if (!user.isEmpty()) {
-        project.setUserPermission(user, viewer);
-      }
-    }
-    for (String user: accessExecutorList) {
-      user = user.trim();
-      if (!user.isEmpty()) {
-        project.setUserPermission(user, executor);
-      }
-    }
-    for (String user: accessOwnerList) {
-      user = user.trim();
-      if (!user.isEmpty()) {
-        project.setUserPermission(user, admin);
-      }
-    }
-    project.setUserPermission(reportalUser, admin);
-  }
+			scheduleManager.scheduleFlow(-1, project.getId(),
+					project.getName(), flow.getId(), "ready",
+					firstSchedTime.getMillis(), firstSchedTime.getZone(),
+					period, DateTime.now().getMillis(),
+					firstSchedTime.getMillis(), firstSchedTime.getMillis(),
+					user.getUserId(), options, null);
+		}
+	}
 
-  public void createZipAndUpload(ProjectManager projectManager, User user, String reportalStorageUser) throws Exception {
-    // Create temp folder to make the zip file for upload
-    File tempDir = Utils.createTempDir();
-    File dataDir = new File(tempDir, "data");
-    dataDir.mkdirs();
+	public void updatePermissions() {
+		// Save permissions
+		String[] accessViewerList = accessViewer.trim().split(
+				ACCESS_LIST_SPLIT_REGEX);
+		String[] accessExecutorList = accessExecutor.trim().split(
+				ACCESS_LIST_SPLIT_REGEX);
+		String[] accessOwnerList = accessOwner.trim().split(
+				ACCESS_LIST_SPLIT_REGEX);
+		// Prepare permission types
+		Permission admin = new Permission();
+		admin.addPermission(Type.READ);
+		admin.addPermission(Type.EXECUTE);
+		admin.addPermission(Type.ADMIN);
+		Permission executor = new Permission();
+		executor.addPermission(Type.READ);
+		executor.addPermission(Type.EXECUTE);
+		Permission viewer = new Permission();
+		viewer.addPermission(Type.READ);
+		// Sets the permissions
+		project.clearUserPermission();
+		for (String user : accessViewerList) {
+			user = user.trim();
+			if (!user.isEmpty()) {
+				project.setUserPermission(user, viewer);
+			}
+		}
+		for (String user : accessExecutorList) {
+			user = user.trim();
+			if (!user.isEmpty()) {
+				project.setUserPermission(user, executor);
+			}
+		}
+		for (String user : accessOwnerList) {
+			user = user.trim();
+			if (!user.isEmpty()) {
+				project.setUserPermission(user, admin);
+			}
+		}
+		project.setUserPermission(reportalUser, admin);
+	}
 
-    // Create all job files
-    String dependentJob = null;
-    List<String> jobs = new ArrayList<String>();
-    for (Query query: queries) {
-      // Create .job file
-      File jobFile = ReportalHelper.findAvailableFileName(dataDir, ReportalHelper.sanitizeText(query.title), ".job");
+	public void createZipAndUpload(ProjectManager projectManager, User user,
+			String reportalStorageUser) throws Exception {
+		// Create temp folder to make the zip file for upload
+		File tempDir = Utils.createTempDir();
+		File dataDir = new File(tempDir, "data");
+		dataDir.mkdirs();
 
-      String fileName = jobFile.getName();
-      String jobName = fileName.substring(0, fileName.length() - 4);
-      jobs.add(jobName);
+		// Create all job files
+		String dependentJob = null;
+		List<String> jobs = new ArrayList<String>();
+		for (Query query : queries) {
+			// Create .job file
+			File jobFile = ReportalHelper.findAvailableFileName(dataDir,
+					ReportalHelper.sanitizeText(query.title), ".job");
 
-      // Populate the job file
-      ReportalTypeManager.createJobAndFiles(this, jobFile, jobName, query.title, query.type, query.script, dependentJob, reportalUser, null);
+			String fileName = jobFile.getName();
+			String jobName = fileName.substring(0, fileName.length() - 4);
+			jobs.add(jobName);
 
-      // For dependency of next query
-      dependentJob = jobName;
-    }
+			Map<String, String> extras = new HashMap<String, String>();
 
-    // Create the pinot data build and push job
-      String jobName = "pinot-data-build-and-push";
+			for (Variable var : pinotConfigs) {
+				extras.put("reportal.pinot." + var.title, var.name);
 
-    // Create .job file
-    File jobFile = ReportalHelper.findAvailableFileName(dataDir, ReportalHelper.sanitizeText(jobName), ".job");
-    Map<String, String> extras = new HashMap<String, String>();
-    extras.put("reportal.job.number", Integer.toString(jobs.size()));
-    for (int i = 0; i < jobs.size(); i++) {
-      extras.put("reportal.job." + i, jobs.get(i));
-    }
-    for (Variable var :pinotConfigs) {
-      extras.put("reportal.pinot." + var.title, var.name);
-    }
-    ReportalTypeManager.createPinotJobAndFiles(this, jobFile, jobName, "", ReportalTypeManager.PINOT_JOB, "", dependentJob, reportalStorageUser, extras);
+				System.out.println("reportal.pinot." + var.title + ","
+						+ var.name);
+			}
 
-    // Zip jobs together
-    File archiveFile = new File(tempDir, project.getName() + ".zip");
-    Utils.zipFolderContent(dataDir, archiveFile);
+			ReportalTypeManager.createJobAndFiles(this, jobFile, jobName,
+					query.title, query.type, query.param, query.script,
+					dependentJob, reportalUser, extras);
 
-    // Upload zip
-    projectManager.uploadProject(project, archiveFile, "zip", user);
+			// For dependency of next query
+			dependentJob = jobName;
+		}
 
-    // Empty temp
-    if (tempDir.exists()) {
-      FileUtils.deleteDirectory(tempDir);
-    }
-  }
+		// Create the pinot data build and push job
+		String jobName = "pinot-data-build-and-push";
 
-  public void loadImmutableFromProject(Project project) {
-    reportalUser = stringGetter.get(project.getMetadata().get("reportal-user"));
-    ownerEmail = stringGetter.get(project.getMetadata().get("owner-email"));
-  }
+		// Create .job file
+		File jobFile = ReportalHelper.findAvailableFileName(dataDir,
+				ReportalHelper.sanitizeText(jobName), ".job");
+		Map<String, String> extras = new HashMap<String, String>();
+		extras.put("reportal.job.number", Integer.toString(jobs.size()));
+		for (int i = 0; i < jobs.size(); i++) {
+			extras.put("reportal.job." + i, jobs.get(i));
+		}
+		for (Variable var : pinotConfigs) {
+			extras.put("reportal.pinot." + var.title, var.name);
+		}
+		ReportalTypeManager.createPinotJobAndFiles(this, jobFile, jobName, "",
+				ReportalTypeManager.PINOT_JOB, "", dependentJob,
+				reportalStorageUser, extras);
 
-  /**
-   * @return A set of users explicitly granted viewer access to the report.
-   */
-  public Set<String> getAccessViewers() {
-    Set<String> viewers = new HashSet<String>();
-    for (String user : accessViewer.trim().split(ACCESS_LIST_SPLIT_REGEX)) {
-      if (!user.isEmpty()) {
-        viewers.add(user);
-      }
-    }
-    return viewers;
-  }
+		// Zip jobs together
+		File archiveFile = new File(tempDir, project.getName() + ".zip");
+		Utils.zipFolderContent(dataDir, archiveFile);
 
-  /**
-   * @return A set of users explicitly granted executor access to the report.
-   */
-  public Set<String> getAccessExecutors() {
-    Set<String> executors = new HashSet<String>();
-    for (String user : accessExecutor.trim().split(ACCESS_LIST_SPLIT_REGEX)) {
-      if (!user.isEmpty()) {
-        executors.add(user);
+		// Upload zip
+		projectManager.uploadProject(project, archiveFile, "zip", user);
 
-      }
-    }
-    return executors;
-  }
+		// Empty temp
+		if (tempDir.exists()) {
+			FileUtils.deleteDirectory(tempDir);
+		}
+	}
 
-  public static Reportal loadFromProject(Project project) {
-    if (project == null)
-    {
-      return null;
-    }
+	public void loadImmutableFromProject(Project project) {
+		reportalUser = stringGetter.get(project.getMetadata().get(
+				"reportal-user"));
+		ownerEmail = stringGetter.get(project.getMetadata().get("owner-email"));
+	}
 
-    Reportal reportal = new Reportal();
-    Map<String, Object> metadata = project.getMetadata();
+	/**
+	 * @return A set of users explicitly granted viewer access to the report.
+	 */
+	public Set<String> getAccessViewers() {
+		Set<String> viewers = new HashSet<String>();
+		for (String user : accessViewer.trim().split(ACCESS_LIST_SPLIT_REGEX)) {
+			if (!user.isEmpty()) {
+				viewers.add(user);
+			}
+		}
+		return viewers;
+	}
 
-    reportal.loadImmutableFromProject(project);
+	/**
+	 * @return A set of users explicitly granted executor access to the report.
+	 */
+	public Set<String> getAccessExecutors() {
+		Set<String> executors = new HashSet<String>();
+		for (String user : accessExecutor.trim().split(ACCESS_LIST_SPLIT_REGEX)) {
+			if (!user.isEmpty()) {
+				executors.add(user);
 
-    if (reportal.reportalUser == null || reportal.reportalUser.isEmpty()) {
-      return null;
-    }
+			}
+		}
+		return executors;
+	}
 
-    reportal.title = stringGetter.get(metadata.get("title"));
-    reportal.description = project.getDescription();
-    int queries = intGetter.get(project.getMetadata().get("queryNumber"));
-    int variables = intGetter.get(project.getMetadata().get("variableNumber"));
-    int pinotConfigs = intGetter.get(project.getMetadata().get("pinotConfigNumber"));
+	public static Reportal loadFromProject(Project project) {
+		if (project == null) {
+			return null;
+		}
 
-    reportal.schedule = boolGetter.get(project.getMetadata().get("schedule"));
-    reportal.scheduleHour = stringGetter.get(project.getMetadata().get("scheduleHour"));
-    reportal.scheduleMinute = stringGetter.get(project.getMetadata().get("scheduleMinute"));
-    reportal.scheduleAmPm = stringGetter.get(project.getMetadata().get("scheduleAmPm"));
-    reportal.scheduleTimeZone = stringGetter.get(project.getMetadata().get("scheduleTimeZone"));
-    reportal.scheduleDate = stringGetter.get(project.getMetadata().get("scheduleDate"));
-    reportal.scheduleRepeat = boolGetter.get(project.getMetadata().get("scheduleRepeat"));
-    reportal.scheduleIntervalQuantity = stringGetter.get(project.getMetadata().get("scheduleIntervalQuantity"));
-    reportal.scheduleInterval = stringGetter.get(project.getMetadata().get("scheduleInterval"));
+		Reportal reportal = new Reportal();
+		Map<String, Object> metadata = project.getMetadata();
 
-    reportal.accessViewer = stringGetter.get(project.getMetadata().get("accessViewer"));
-    reportal.accessExecutor = stringGetter.get(project.getMetadata().get("accessExecutor"));
-    reportal.accessOwner = stringGetter.get(project.getMetadata().get("accessOwner"));
+		reportal.loadImmutableFromProject(project);
 
-    reportal.notifications = stringGetter.get(project.getMetadata().get("notifications"));
-    reportal.failureNotifications = stringGetter.get(project.getMetadata().get("failureNotifications"));
+		if (reportal.reportalUser == null || reportal.reportalUser.isEmpty()) {
+			return null;
+		}
 
-    reportal.queries = new ArrayList<Query>();
+		reportal.title = stringGetter.get(metadata.get("title"));
+		reportal.description = project.getDescription();
+		int queries = intGetter.get(project.getMetadata().get("queryNumber"));
+		int variables = intGetter.get(project.getMetadata().get(
+				"variableNumber"));
+		int pinotConfigs = intGetter.get(project.getMetadata().get(
+				"pinotConfigNumber"));
 
-    for (int i = 0; i < queries; i++) {
-      Query query = new Query();
-      reportal.queries.add(query);
-      query.title = stringGetter.get(project.getMetadata().get("query" + i + "title"));
-      query.type = stringGetter.get(project.getMetadata().get("query" + i + "type"));
-      query.script = stringGetter.get(project.getMetadata().get("query" + i + "script"));
-    }
+		reportal.schedule = boolGetter.get(project.getMetadata()
+				.get("schedule"));
+		reportal.scheduleHour = stringGetter.get(project.getMetadata().get(
+				"scheduleHour"));
+		reportal.scheduleMinute = stringGetter.get(project.getMetadata().get(
+				"scheduleMinute"));
+		reportal.scheduleAmPm = stringGetter.get(project.getMetadata().get(
+				"scheduleAmPm"));
+		reportal.scheduleTimeZone = stringGetter.get(project.getMetadata().get(
+				"scheduleTimeZone"));
+		reportal.scheduleDate = stringGetter.get(project.getMetadata().get(
+				"scheduleDate"));
+		reportal.scheduleRepeat = boolGetter.get(project.getMetadata().get(
+				"scheduleRepeat"));
+		reportal.scheduleIntervalQuantity = stringGetter.get(project
+				.getMetadata().get("scheduleIntervalQuantity"));
+		reportal.scheduleInterval = stringGetter.get(project.getMetadata().get(
+				"scheduleInterval"));
 
-    reportal.variables = new ArrayList<Variable>();
+		reportal.accessViewer = stringGetter.get(project.getMetadata().get(
+				"accessViewer"));
+		reportal.accessExecutor = stringGetter.get(project.getMetadata().get(
+				"accessExecutor"));
+		reportal.accessOwner = stringGetter.get(project.getMetadata().get(
+				"accessOwner"));
 
-    for (int i = 0; i < variables; i++) {
-      Variable variable = new Variable();
-      reportal.variables.add(variable);
-      variable.title = stringGetter.get(project.getMetadata().get("variable" + i + "title"));
-      variable.name = stringGetter.get(project.getMetadata().get("variable" + i + "name"));
-    }
+		reportal.notifications = stringGetter.get(project.getMetadata().get(
+				"notifications"));
+		reportal.failureNotifications = stringGetter.get(project.getMetadata()
+				.get("failureNotifications"));
 
-    reportal.pinotConfigs = new ArrayList<Variable>();
-    for (int i = 0; i < pinotConfigs; i++) {
-      Variable variable = new Variable();
-      reportal.pinotConfigs.add(variable);
-      variable.title = stringGetter.get(project.getMetadata().get("pinotConfig" + i + "title"));
-      variable.name = stringGetter.get(project.getMetadata().get("pinotConfig" + i + "name"));
-    }
+		reportal.queries = new ArrayList<Query>();
 
-    reportal.optionalPinotConfigs = stringGetter.get(project.getMetadata().get("optionalPinotConfigs"));
-    reportal.project = project;
+		for (int i = 0; i < queries; i++) {
+			Query query = new Query();
+			reportal.queries.add(query);
+			query.title = stringGetter.get(project.getMetadata().get(
+					"query" + i + "title"));
+			query.type = stringGetter.get(project.getMetadata().get(
+					"query" + i + "type"));
+			query.param = stringGetter.get(project.getMetadata().get(
+					"query" + i + "param"));
+			query.script = stringGetter.get(project.getMetadata().get(
+					"query" + i + "script"));
+		}
 
-    return reportal;
-  }
+		reportal.variables = new ArrayList<Variable>();
 
-  public static Getter<Boolean> boolGetter = new Getter<Boolean>(false, Boolean.class);
-  public static Getter<Integer> intGetter = new Getter<Integer>(0, Integer.class);
-  public static Getter<String> stringGetter = new Getter<String>("", String.class);
+		for (int i = 0; i < variables; i++) {
+			Variable variable = new Variable();
+			reportal.variables.add(variable);
+			variable.title = stringGetter.get(project.getMetadata().get(
+					"variable" + i + "title"));
+			variable.name = stringGetter.get(project.getMetadata().get(
+					"variable" + i + "name"));
+		}
 
-  public static class Getter<T> {
-    Class<?> cls;
-    T defaultValue;
+		reportal.pinotConfigs = new ArrayList<Variable>();
+		for (int i = 0; i < pinotConfigs; i++) {
+			Variable variable = new Variable();
+			reportal.pinotConfigs.add(variable);
+			variable.title = stringGetter.get(project.getMetadata().get(
+					"pinotConfig" + i + "title"));
+			variable.name = stringGetter.get(project.getMetadata().get(
+					"pinotConfig" + i + "name"));
+		}
 
-    public Getter(T defaultValue, Class<?> cls) {
-      this.cls = cls;
-      this.defaultValue = defaultValue;
-    }
+		reportal.optionalPinotConfigs = stringGetter.get(project.getMetadata()
+				.get("optionalPinotConfigs"));
+		reportal.project = project;
 
-    @SuppressWarnings("unchecked")
-    public T get(Object object) {
-      if (object == null || !(cls.isAssignableFrom(object.getClass()))) {
-        return defaultValue;
-      }
-      return (T)object;
-    }
-  }
+		return reportal;
+	}
 
-  public static class Query {
-    public String title;
-    public String type;
-    public String script;
+	public static Getter<Boolean> boolGetter = new Getter<Boolean>(false,
+			Boolean.class);
+	public static Getter<Integer> intGetter = new Getter<Integer>(0,
+			Integer.class);
+	public static Getter<String> stringGetter = new Getter<String>("",
+			String.class);
 
-    public String getTitle() {
-      return title;
-    }
+	public static class Getter<T> {
+		Class<?> cls;
+		T defaultValue;
 
-    public String getType() {
-      return type;
-    }
+		public Getter(T defaultValue, Class<?> cls) {
+			this.cls = cls;
+			this.defaultValue = defaultValue;
+		}
 
-    public String getScript() {
-      return script;
-    }
-  }
+		@SuppressWarnings("unchecked")
+		public T get(Object object) {
+			if (object == null || !(cls.isAssignableFrom(object.getClass()))) {
+				return defaultValue;
+			}
+			return (T) object;
+		}
+	}
 
-  public static class Variable {
-    public String title;
-    public String name;
+	public static class Query {
+		public String title;
+		public String type;
+		public String param;
+		public String script;
 
-    public String getTitle() {
-      return title;
-    }
+		public String getTitle() {
+			return title;
+		}
 
-    public String getName() {
-      return name;
-    }
-  }
+		public String getType() {
+			return type;
+		}
+
+		public String getParam() {
+			return param;
+		}
+
+		public String getScript() {
+			return script;
+		}
+	}
+
+	public static class Variable {
+		public String title;
+		public String name;
+
+		public String getTitle() {
+			return title;
+		}
+
+		public String getName() {
+			return name;
+		}
+	}
 }

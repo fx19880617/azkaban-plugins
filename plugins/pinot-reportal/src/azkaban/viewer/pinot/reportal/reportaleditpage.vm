@@ -45,11 +45,13 @@
 
 						## Escape the query title and script strings as JavaScript strings before loading them.
 						#set($queryTitle = $esc.javascript(${query.title}))
+						#set($queryParam = $esc.javascript(${query.param}))
 						#set($queryScript = $esc.javascript(${query.script}))
 						{
 							"num" : "${num}",
 							"title" : #if($queryTitle) "$queryTitle" #else "" #end,
 							"type" : "${query.type}",
+							"param" : #if($queryParam) "$queryParam" #else "" #end,
 							"script" : #if($queryScript) "$queryScript" #else "" #end
 						},
 					#end
@@ -174,7 +176,7 @@
 						</div>
 					</fieldset>
 					<fieldset>
-						<div id="variable-fields">
+					<!--	<div id="variable-fields">
 							<legend>Variables</legend>
 							<ol id="variable-list" class="reportal-list">
 							</ol>
@@ -198,8 +200,8 @@
 							<div class="control-group">
 								<label class="control-label"></label>
 								<div class="controls"><button id="buttonAddVariable" type="button" class="btn btn-success" value="Add another Variable"><span class="icon icon-plus-alt icon-white icon-small"></span>Add Another Variable</button></div>
-							</div>
-						</div>
+							</div> 
+						</div> -->
 					</fieldset>
 					<legend>Queries</legend>
 					<fieldset>
@@ -228,6 +230,12 @@
 									<label class="control-label">Script</label>
 									<div class="controls"><textarea class="span8 queryscript" nametemplate="query#script"></textarea></div>
 								</div>
+								 		<div class="control-group">
+              <label class="control-label">Params</label>
+				<div class="controls"><textarea class="span8 queryparams" nametemplate="query#param"></textarea>
+				 <br/>Please include comma seperated list of query param-values here.
+				</div>                 
+          </div>
 							</li>
 						</ol>
 						<div class="control-group">

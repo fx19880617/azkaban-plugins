@@ -41,47 +41,63 @@ public class ReportalMailCreator implements MailCreator {
 	public static final int NUM_PREVIEW_ROWS = 50;
 
 	static {
-		DefaultMailCreator.registerCreator(REPORTAL_MAIL_CREATOR, new ReportalMailCreator());
+		DefaultMailCreator.registerCreator(REPORTAL_MAIL_CREATOR,
+				new ReportalMailCreator());
 	}
 
 	@Override
-	public boolean createFirstErrorMessage(ExecutableFlow flow, EmailMessage message, String azkabanName, String clientHostname, String clientPortNumber, String... vars) {
+	public boolean createFirstErrorMessage(ExecutableFlow flow,
+			EmailMessage message, String azkabanName, String clientHostname,
+			String clientPortNumber, String... vars) {
 
 		ExecutionOptions option = flow.getExecutionOptions();
 		Set<String> emailList = new HashSet<String>(option.getFailureEmails());
 
-		return createEmail(flow, emailList, message, "Failure", azkabanName, clientHostname, clientPortNumber, false);
+		return createEmail(flow, emailList, message, "Failure", azkabanName,
+				clientHostname, clientPortNumber, false);
 	}
 
 	@Override
-	public boolean createErrorEmail(ExecutableFlow flow, EmailMessage message, String azkabanName, String clientHostname, String clientPortNumber, String... vars) {
+	public boolean createErrorEmail(ExecutableFlow flow, EmailMessage message,
+			String azkabanName, String clientHostname, String clientPortNumber,
+			String... vars) {
 
 		ExecutionOptions option = flow.getExecutionOptions();
 		Set<String> emailList = new HashSet<String>(option.getFailureEmails());
 
-		return createEmail(flow, emailList, message, "Failure", azkabanName, clientHostname, clientPortNumber, false);
+		return createEmail(flow, emailList, message, "Failure", azkabanName,
+				clientHostname, clientPortNumber, false);
 	}
 
 	@Override
-	public boolean createSuccessEmail(ExecutableFlow flow, EmailMessage message, String azkabanName, String clientHostname, String clientPortNumber, String... vars) {
+	public boolean createSuccessEmail(ExecutableFlow flow,
+			EmailMessage message, String azkabanName, String clientHostname,
+			String clientPortNumber, String... vars) {
 
 		ExecutionOptions option = flow.getExecutionOptions();
 		Set<String> emailList = new HashSet<String>(option.getSuccessEmails());
 
-		return createEmail(flow, emailList, message, "Success", azkabanName, clientHostname, clientPortNumber, true);
+		return createEmail(flow, emailList, message, "Success", azkabanName,
+				clientHostname, clientPortNumber, true);
 	}
 
-	private boolean createEmail(ExecutableFlow flow, Set<String> emailList, EmailMessage message, String status, String azkabanName, String clientHostname, String clientPortNumber, boolean printData) {
+	private boolean createEmail(ExecutableFlow flow, Set<String> emailList,
+			EmailMessage message, String status, String azkabanName,
+			String clientHostname, String clientPortNumber, boolean printData) {
 
-		Project project = azkaban.getProjectManager().getProject(flow.getProjectId());
+		Project project = azkaban.getProjectManager().getProject(
+				flow.getProjectId());
 
 		if (emailList != null && !emailList.isEmpty()) {
 			message.addAllToAddress(emailList);
 			message.setMimeType("text/html");
-			message.setSubject("Report " + status + ": " + project.getMetadata().get("title"));
-			String urlPrefix = "https://" + clientHostname + ":" + clientPortNumber + "/pinot-reportal";
+			message.setSubject("Report " + status + ": "
+					+ project.getMetadata().get("title"));
+			String urlPrefix = "https://" + clientHostname + ":"
+					+ clientPortNumber + "/pinot-reportal";
 			try {
-				return createMessage(project, flow, message, urlPrefix, printData);
+				return createMessage(project, flow, message, urlPrefix,
+						printData);
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -90,7 +106,9 @@ public class ReportalMailCreator implements MailCreator {
 		return false;
 	}
 
-	private boolean createMessage(Project project, ExecutableFlow flow, EmailMessage message, String urlPrefix, boolean printData) throws Exception {
+	private boolean createMessage(Project project, ExecutableFlow flow,
+			EmailMessage message, String urlPrefix, boolean printData)
+			throws Exception {
 		message.println("<html>");
 		message.println("<head></head>");
 		message.println("<body style='font-family: verdana; color: #000000; background-color: #cccccc; padding: 20px;'>");
@@ -99,21 +117,29 @@ public class ReportalMailCreator implements MailCreator {
 		message.println("<b>" + project.getMetadata().get("title") + "</b>");
 		message.println("<div style='font-size: .8em; margin-top: .5em; margin-bottom: .5em;'>");
 		// Status
-		message.println(flow.getStatus().name());
+
+		// message.println(flow.getStatus().name());
 		// Link to logs
-		message.println("(<a href='" + urlPrefix + "?view&logs&id=" + flow.getProjectId() + "&execid=" + flow.getExecutionId() + "'>Logs</a>)");
+		message.println("(<a href='" + urlPrefix + "?view&logs&id="
+				+ flow.getProjectId() + "&execid=" + flow.getExecutionId()
+				+ "'>Logs</a>)");
 		// Link to Data
-		message.println("(<a href='" + urlPrefix + "?view&id=" + flow.getProjectId() + "&execid=" + flow.getExecutionId() + "'>Result data</a>)");
+		message.println("(<a href='" + urlPrefix + "?view&id="
+				+ flow.getProjectId() + "&execid=" + flow.getExecutionId()
+				+ "'>Result data</a>)");
 		// Link to Edit
-		message.println("(<a href='" + urlPrefix + "?edit&id=" + flow.getProjectId() + "'>Edit</a>)");
+		message.println("(<a href='" + urlPrefix + "?edit&id="
+				+ flow.getProjectId() + "'>Edit</a>)");
 		message.println("</div>");
 		message.println("<div style='margin-top: .5em; margin-bottom: .5em;'>");
 		// Description
-		message.println(project.getDescription());
+		// message.println(project.getDescription());
+
 		message.println("</div>");
 
 		// Print variable values, if any
-		Map<String, String> flowParameters = flow.getExecutionOptions().getFlowParameters();
+		Map<String, String> flowParameters = flow.getExecutionOptions()
+				.getFlowParameters();
 		int i = 0;
 		while (flowParameters.containsKey("reportal.variable." + i + ".from")) {
 			if (i == 0) {
@@ -126,8 +152,12 @@ public class ReportalMailCreator implements MailCreator {
 			}
 
 			message.println("<tr>");
-			message.println("<td>" + flowParameters.get("reportal.variable." + i + ".from") + "</td>");
-			message.println("<td>" + flowParameters.get("reportal.variable." + i + ".to") + "</td>");
+			message.println("<td>"
+					+ flowParameters.get("reportal.variable." + i + ".from")
+					+ "</td>");
+			message.println("<td>"
+					+ flowParameters.get("reportal.variable." + i + ".to")
+					+ "</td>");
 			message.println("</tr>");
 
 			i++;
@@ -136,21 +166,25 @@ public class ReportalMailCreator implements MailCreator {
 
 		int pinotClusterConfigNumber = 2;
 		int pinotDatasetConfigNumber = 3;
-    for (String key : project.getMetadata().keySet()) {
-      if (project.getMetadata().get(key).equals("pinot-cluster-name")) {
-        pinotClusterConfigNumber = Integer.parseInt(key.replace("pinotConfig", "").replace("title", ""));
-      }
-      if (project.getMetadata().get(key).equals("pinot-dataset-name")) {
-        pinotDatasetConfigNumber = Integer.parseInt(key.replace("pinotConfig", "").replace("title", ""));
-      }
-    }
+		for (String key : project.getMetadata().keySet()) {
+			if (project.getMetadata().get(key).equals("pinot-cluster-name")) {
+				pinotClusterConfigNumber = Integer.parseInt(key.replace(
+						"pinotConfig", "").replace("title", ""));
+			}
+			if (project.getMetadata().get(key).equals("pinot-dataset-name")) {
+				pinotDatasetConfigNumber = Integer.parseInt(key.replace(
+						"pinotConfig", "").replace("title", ""));
+			}
+		}
 
-		String url = azkaban.getServerProps().getString("reportal.pinot.easybi.url") + "?ds=" + azkaban.getServerProps().getString("reportal.pinot.easybi.data.source." + project.getMetadata().get("pinotConfig" + pinotClusterConfigNumber + "name")) + "&table=" + project.getMetadata().get("pinotConfig" + pinotDatasetConfigNumber + "name");
+			String url = "http://esv4-bizops11.linkedin.biz/easybi/#/charts/new?ds=ReportInPinot&table="
+				+ project.getMetadata().get(
+						"pinotConfig" + pinotDatasetConfigNumber + "name");
 		message.println("<a href='" + url + "'>EasyBI UI</a>");
 		message.println("</div>");
-    message.println("<div style='margin-top: .5em; margin-bottom: .5em;'>");
-    message.println(url);
-    message.println("</div>");
+		message.println("<div style='margin-top: .5em; margin-bottom: .5em;'>");
+		//message.println(url);
+		message.println("</div>");
 		message.println("</div>").println("</body>").println("</html>");
 
 		return true;

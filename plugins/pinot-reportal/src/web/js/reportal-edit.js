@@ -216,6 +216,7 @@ $(document).ready(function () {
 			var element = queryListObject.template.clone();
 			element.find(".querytitle").eq(0).val(item.title);
 			var select = element.find(".querytype").eq(0).val(item.type);
+			element.find(".queryparams").eq(0).val(item.param);
 			element.find(".queryscript").eq(0).val(item.script);
 			element.appendTo(queryListObject);
 		}

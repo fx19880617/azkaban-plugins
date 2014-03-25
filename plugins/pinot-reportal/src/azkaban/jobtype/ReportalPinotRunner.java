@@ -20,152 +20,247 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
+import java.util.TimeZone;
 
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
+import org.apache.log4j.Logger;
 import org.apache.pig.ExecType;
 import org.apache.pig.PigServer;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
+import org.joda.time.format.DateTimeFormat;
+import org.joda.time.format.DateTimeFormatter;
 
 import azkaban.flow.CommonJobProperties;
 import azkaban.pinot.reportal.util.CompositeException;
 import azkaban.utils.Props;
+import azkaban.pinot.reportal.util.PinotReportalHelper;
 
 import com.linkedin.pinot.hadoop.creators.GeneratePinotData;
 import com.linkedin.pinot.hadoop.jobs.azkaban.PushTarSegmentsJob;
+import com.linkedin.pinot.hadoop.retention.PinotHDFSRetention;
 
 public class ReportalPinotRunner extends ReportalAbstractRunner {
 
-  Props prop;
+	Props prop;
 
-  public ReportalPinotRunner(String jobName, Properties props) {
-    super(props);
-    prop = new Props();
-    prop.put(props);
-  }
+	private static final Logger LOGGER = Logger
+			.getLogger(ReportalPinotRunner.class);
 
-  @Override
-  protected void runReportal() throws Exception {
-    System.out.println("Reportal Pinot Runner: Initializing");
-    String execId = props.getString(CommonJobProperties.EXEC_ID);
-    for (String key: props.getKeySet()) {
-      System.out.println("key: " + key + ", value: " + props.getString(key));
-    }
+	public ReportalPinotRunner(String jobName, Properties props) {
+		super(props);
+		prop = new Props();
+		prop.put(props);
+	}
 
+	@Override
+	protected void runReportal() throws Exception {
+		System.out.println("Reportal Pinot Runner: Initializing");
+		String execId = props.getString(CommonJobProperties.EXEC_ID);
+		for (String key : props.getKeySet()) {
+			System.out.println("key: " + key + ", value: "
+					+ props.getString(key));
+		}
 
-    azkaban.common.utils.Props pinotSegmentCreationProps = new azkaban.common.utils.Props();
-    String optionalPinotConfigsString = props.getString("reportal.pinot.optional-pinot-configs");
-    parseOptionalPinotConfigs(pinotSegmentCreationProps, optionalPinotConfigsString);
+		azkaban.common.utils.Props pinotSegmentCreationProps = new azkaban.common.utils.Props();
 
-    List<Exception> exceptions = new ArrayList<Exception>();
+		String optionalPinotConfigsString = props
+				.getString("reportal.pinot.optional-pinot-configs");
+		PinotReportalHelper.parseOptionalPinotConfigs(
+				pinotSegmentCreationProps, optionalPinotConfigsString);
 
-    // 1. Data Validation
-    runPigJobForDataPreprocessAndValidation(pinotSegmentCreationProps);
+		
+		List<Exception> exceptions = new ArrayList<Exception>();
 
-    // 2. Pinot Segment Creation
-    String name = "GeneratePinotFormatData";
+		// 1. Data Validation
+		runPigJobForDataPreprocessAndValidation(pinotSegmentCreationProps);
 
-    pinotSegmentCreationProps.put("path.to.input", "/tmp/reportal/" + execId + "/input/preparedData");
-    pinotSegmentCreationProps.put("path.to.temp.dir", "/tmp/reportal/" + execId + "/temp");
-    pinotSegmentCreationProps.put("path.to.output", props.getString("reportal.pinot.pinot-segment-output-path", "/tmp/reportal/" + execId + "/pinotSegments"));
-    pinotSegmentCreationProps.put("path.to.deps.jar", props.getString("reportal.pinot.dependency.jars.path"));
-    pinotSegmentCreationProps.put("segment.cluster.name", props.getString("reportal.pinot.pinot-cluster-name"));
-    pinotSegmentCreationProps.put("segment.collection.name", props.getString("reportal.pinot.pinot-dataset-name"));
+		// 2. Pinot Segment Creation
+		String name = "GeneratePinotFormatData";
 
-    pinotSegmentCreationProps.put("segment.time.column.name", props.getString("reportal.pinot.pinot-time-column-name"));
-    pinotSegmentCreationProps.put("segment.time.column.type", props.getString("reportal.pinot.pinot-time-column-type"));
-    pinotSegmentCreationProps.put("segment.dimension.columns", props.getString("reportal.pinot.pinot-dimension-columns"));
-    pinotSegmentCreationProps.put("segment.metric.columns", props.getString("reportal.pinot.pinot-metric-columns"));
-    pinotSegmentCreationProps.put("segment.timestamp.columns", props.getString("reportal.pinot.pinot-timestamp-columns"));
+		pinotSegmentCreationProps.put("path.to.input", "/tmp/reportal/"
+				+ execId + "/input/preparedData");
+		pinotSegmentCreationProps.put("path.to.temp.dir", "/tmp/reportal/"
+				+ execId + "/temp");
+		String segmentTarOutputPath = props.getString(
+				"reportal.pinot.pinot-segment-output-path", "/tmp/reportal/"
+						+ execId);
 
-//    props.put("segment.name.appendDate", properties.getProperty("segment.name.appendDate"));
+		DateTime dateTime = new DateTime();
+		int month = dateTime.getMonthOfYear();
+		int day = dateTime.getDayOfMonth();
+		int hour = dateTime.getHourOfDay();
+		String formattedTime = String.valueOf(dateTime.getYear())
+				+ (month < 10 ? "0" + month : month)
+				+ (day < 10 ? "0" + day : day)
+				+ (hour < 10 ? "0" + hour : hour);
 
+		String tempSegmentTarOutputPath = segmentTarOutputPath + "/"
+				+ formattedTime + "/tar";
+		Path finalOutputTarDir = new Path(tempSegmentTarOutputPath);
 
-    GeneratePinotData generatePinotData = new GeneratePinotData(name, pinotSegmentCreationProps);
-    generatePinotData.run();
+		Configuration conf = new Configuration();
+		FileSystem fs = FileSystem.get(conf);
 
-    System.out.println("Pinot data generation job completed.");
-    // 3. Push Segment
-    azkaban.common.utils.Props pushProps = new azkaban.common.utils.Props();
-    pushProps.put("path.to.input", props.getString("reportal.pinot.pinot-segment-output-path", "/tmp/reportal/" + execId));
-    pushProps.put("push.to.hosts", props.getString("reportal.pinot.data.push.host." + props.getString("reportal.pinot.pinot-push-fabric")));
-    pushProps.put("push.to.port", props.getString("reportal.pinot.data.push.port." + props.getString("reportal.pinot.pinot-push-fabric")));
-    PushTarSegmentsJob pushTarSegmentsJob = new PushTarSegmentsJob("pushGeneratedPinotData", pushProps);
-    pushTarSegmentsJob.run();
+		if (fs.exists(finalOutputTarDir)) {
+			fs.delete(finalOutputTarDir, true);
+		}
 
-    if (exceptions.size() > 0) {
-      throw new CompositeException(exceptions);
-    }
+		pinotSegmentCreationProps.put("path.to.output",
+				tempSegmentTarOutputPath);
+		pinotSegmentCreationProps.put("path.to.deps.jar",
+				props.getString("reportal.pinot.dependency.jars.path"));
+		pinotSegmentCreationProps.put("segment.cluster.name",
+				props.getString("reportal.pinot.pinot-cluster-name"));
+		pinotSegmentCreationProps.put("segment.collection.name",
+				props.getString("reportal.pinot.pinot-dataset-name"));
 
-    System.out.println("Reportal Pinot Runner: Ended successfully");
-  }
+		pinotSegmentCreationProps.put("segment.time.column.name",
+				props.getString("reportal.pinot.pinot-time-column-name"));
+		pinotSegmentCreationProps.put("segment.time.column.type",
+				props.getString("reportal.pinot.pinot-time-column-type"));
+		pinotSegmentCreationProps.put("segment.dimension.columns",
+				props.getString("reportal.pinot.pinot-dimension-columns"));
+		pinotSegmentCreationProps.put("segment.metric.columns",
+				props.getString("reportal.pinot.pinot-metric-columns"));
+		pinotSegmentCreationProps.put("segment.timestamp.columns",
+				props.getString("reportal.pinot.pinot-timestamp-columns"));
 
-  private void parseOptionalPinotConfigs(azkaban.common.utils.Props pinotSegmentCreationProps, String optionalPinotConfigs) {
-    optionalPinotConfigs.replace(" ", "");
-    String[] optionalConfigStrings = optionalPinotConfigs.split("\\r?\\n");
-    for (String optionalConfigString : optionalConfigStrings) {
-      String[] variableStrings = optionalConfigString.split("=");
-      if (variableStrings.length == 2) {
-        pinotSegmentCreationProps.put(variableStrings[0], variableStrings[1]);
-      } else {
-        System.out.println("Config: " + optionalConfigString + " is not a valid pinot config.");
-      }
-    }
-  }
+	
 
-  private void runPigJobForDataPreprocessAndValidation(azkaban.common.utils.Props pinotSegmentCreationProps) throws Exception {
-    PigServer pigServer = new PigServer(ExecType.MAPREDUCE, prop.toProperties());
-    try {
-      String pigScript = generatePigScript(pinotSegmentCreationProps);
-      System.out.println("------------------------------------------\nData Preprocess and Validation Pig Script: \n" + pigScript + "\n------------------------------------------");
-      pigServer.registerQuery(pigScript);
-    }
-    catch (IOException e) {
-      e.printStackTrace();
-    }
-  }
+		// props.put("segment.name.appendDate",
+		// properties.getProperty("segment.name.appendDate"));
 
-  private String generatePigScript(azkaban.common.utils.Props pinotSegmentCreationProps) throws IOException {
-    String pigScript = "";
-    // LOAD data:
-    pigScript += "raw_data = LOAD '" + props.getString("reportal.pinot.pinot-data-input-path") + "' USING LiAvroStorage();\n";
+		GeneratePinotData generatePinotData = new GeneratePinotData(name,
+				pinotSegmentCreationProps);
+		generatePinotData.run();
 
-    // Columns projection:
-    String projected_columns = props.getString("reportal.pinot.pinot-projected-columns", null);
+		System.out.println("Pinot data generation job completed.");
+		// 3. Push Segment
+		azkaban.common.utils.Props pushProps = new azkaban.common.utils.Props();
+		pushProps.put("path.to.input", tempSegmentTarOutputPath);
+		pushProps.put(
+				"push.to.hosts",
+				props.getString("reportal.pinot.data.push.host."
+						+ props.getString("reportal.pinot.pinot-push-fabric")));
+		pushProps.put(
+				"push.to.port",
+				props.getString("reportal.pinot.data.push.port."
+						+ props.getString("reportal.pinot.pinot-push-fabric")));
+		PushTarSegmentsJob pushTarSegmentsJob = new PushTarSegmentsJob(
+				"pushGeneratedPinotData", pushProps);
+		pushTarSegmentsJob.run();
 
-    if (projected_columns == null || projected_columns.length() == 0) {
-      pigScript += "proj_data = raw_data;\n";
-    }
-    else {
-      pigScript += "proj_data = FOREACH raw_data GENERATE " + projected_columns  + ";\n";
-    }
+		if (exceptions.size() > 0) {
+			throw new CompositeException(exceptions);
+		}
 
-    // Columns Filtering:
-    String filtering_condition = props.getString("reportal.pinot.pinot-filtering-conditions", null);
+		// Configuration conf = new Configuration();
+		// FileSystem fs = FileSystem.get(conf);
+		// Path segmentTarOutputDatePath = new Path(segmentTarOutputPath + "/"
+		// + formattedTime);
+		// if (fs.exists(segmentTarOutputDatePath)) {
+		// fs.delete(segmentTarOutputDatePath, true);
+		// }
 
-    if (filtering_condition == null || filtering_condition.length() == 0) {
-      pigScript += "filtered_data = proj_data;\n";
-    }
-    else {
-      pigScript += "filtered_data = FILTER proj_data BY (" + filtering_condition  + ");\n";
-    }
+		// System.out.println("*** tempSegmentTarOutputPath="
+		// + tempSegmentTarOutputPath + " ***segmentTarOutputDatePath="
+		// + segmentTarOutputDatePath);
 
-    // SORT DATA:
-    String sorted_columns = props.getString("reportal.pinot.pinot-primary-key-columns");
-    int segmentsNumber = pinotSegmentCreationProps.getInt("reportal.pinot.parallelism", 1);
-    pigScript += "srted_data = ORDER filtered_data BY " + sorted_columns + " ASC PARALLEL " + segmentsNumber + ";\n";
+		// fs.rename(new Path(tempSegmentTarOutputPath),
+		// segmentTarOutputDatePath);
 
-    // STORE data:
-    String preparedDataPath = "/tmp/reportal/" + props.getString(CommonJobProperties.EXEC_ID) + "/input/preparedData";
-    pigScript += "STORE srted_data INTO '" + preparedDataPath + "' USING LiAvroStorage();\n";
-    return pigScript;
-  }
+		System.out.println("Starting pinot retention job...");
 
-  @Override
-  protected boolean requiresOutput() {
-    return false;
-  }
+		azkaban.common.utils.Props pinotHDFSRetentionProps = new azkaban.common.utils.Props();
+		pinotHDFSRetentionProps.put("path.to.base.dir",
+				props.getString("reportal.pinot.pinot-segment-output-path"));
+		pinotHDFSRetentionProps.put("tar.retention.in.days", 24);
 
-  public static final String PIG_PARAM_PREFIX = "param.";
-  public static final String PIG_PARAM_FILES = "paramfile";
-  public static final String PIG_SCRIPT = "reportal.pig.script";
-  public static final String UDF_IMPORT_LIST = "udf.import.list";
-  public static final String PIG_ADDITIONAL_JARS = "pig.additional.jars";
+		PinotHDFSRetention hdfsRetention = new PinotHDFSRetention(
+				"PinotHDFSCleanupJob", pinotHDFSRetentionProps);
+		hdfsRetention.run();
+
+		System.out.println("Reportal Pinot Runner: Ended successfully");
+
+	}
+
+	private void runPigJobForDataPreprocessAndValidation(
+			azkaban.common.utils.Props pinotSegmentCreationProps)
+			throws Exception {
+		PigServer pigServer = new PigServer(ExecType.MAPREDUCE,
+				prop.toProperties());
+		try {
+			String pigScript = generatePigScript(pinotSegmentCreationProps);
+			System.out
+					.println("------------------------------------------\nData Preprocess and Validation Pig Script: \n"
+							+ pigScript
+							+ "\n------------------------------------------");
+			pigServer.registerQuery(pigScript);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+	private String generatePigScript(
+			azkaban.common.utils.Props pinotSegmentCreationProps)
+			throws IOException {
+		String pigScript = "";
+		// LOAD data:
+		pigScript += "raw_data = LOAD '"
+				+ props.getString("reportal.pinot.pinot-data-input-path")
+				// + "/*.avro"
+				+ "' USING com.linkedin.pig.LiAvroStorage();\n";
+
+		// Columns projection:
+		String projected_columns = props.getString(
+				"reportal.pinot.pinot-projected-columns", null);
+
+		if (projected_columns == null || projected_columns.length() == 0) {
+			pigScript += "proj_data = raw_data;\n";
+		} else {
+			pigScript += "proj_data = FOREACH raw_data GENERATE "
+					+ projected_columns + ";\n";
+		}
+
+		// Columns Filtering:
+		String filtering_condition = props.getString(
+				"reportal.pinot.pinot-filtering-conditions", null);
+
+		if (filtering_condition == null || filtering_condition.length() == 0) {
+			pigScript += "filtered_data = proj_data;\n";
+		} else {
+			pigScript += "filtered_data = FILTER proj_data BY ("
+					+ filtering_condition + ");\n";
+		}
+
+		// SORT DATA:
+		String sorted_columns = props
+				.getString("reportal.pinot.pinot-primary-key-columns");
+		int segmentsNumber = pinotSegmentCreationProps.getInt(
+				"reportal.pinot.parallelism", 1);
+		pigScript += "srted_data = ORDER filtered_data BY " + sorted_columns
+				+ " ASC PARALLEL " + segmentsNumber + ";\n";
+
+		// // STORE data:
+		String preparedDataPath = "/tmp/reportal/"
+				+ props.getString(CommonJobProperties.EXEC_ID)
+				+ "/input/preparedData";
+		pigScript += "STORE srted_data INTO '" + preparedDataPath
+				+ "' USING com.linkedin.pig.LiAvroStorage();\n";
+		return pigScript;
+	}
+
+	@Override
+	protected boolean requiresOutput() {
+		return false;
+	}
+
+	public static final String PIG_PARAM_PREFIX = "param.";
+	public static final String PIG_PARAM_FILES = "paramfile";
+	public static final String PIG_SCRIPT = "reportal.pig.script";
+	public static final String UDF_IMPORT_LIST = "udf.import.list";
+	public static final String PIG_ADDITIONAL_JARS = "pig.additional.jars";
 }

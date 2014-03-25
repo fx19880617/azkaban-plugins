@@ -23,103 +23,86 @@ import azkaban.flow.CommonJobProperties;
 import azkaban.pinot.reportal.util.Reportal;
 import azkaban.utils.Props;
 
-public class ReportalTypeManager
-{
-  public static final String PINOT_JOB = "ReportalPinot";
-  public static final String PINOT_JOB_TYPE = "pinot-reportal-pinot";
+public class ReportalTypeManager {
+	public static final String PINOT_JOB = "ReportalPinot";
+	public static final String PINOT_JOB_TYPE = "pinot-reportal-pinot";
 
-  public static void createJobAndFiles(Reportal reportal,
-                                       File jobFile,
-                                       String jobName,
-                                       String queryTitle,
-                                       String queryType,
-                                       String queryScript,
-                                       String dependentJob,
-                                       String userName,
-                                       Map<String, String> extras) throws Exception
-  {
+	public static void createJobAndFiles(Reportal reportal, File jobFile,
+			String jobName, String queryTitle, String queryType,
+			String queryParam, String queryScript, String dependentJob,
+			String userName, Map<String, String> extras) throws Exception {
 
-    // Create props for the job
-    Props propertiesFile = new Props();
-    propertiesFile.put("title", queryTitle);
+		// Create props for the job
+		Props propertiesFile = new Props();
+		propertiesFile.put("title", queryTitle);
 
-    ReportalType type = ReportalType.getTypeByName(queryType);
+		ReportalType type = ReportalType.getTypeByName(queryType);
 
-    if (type == null)
-    {
-      throw new Exception("Type " + queryType + " is invalid.");
-    }
+		if (type == null) {
+			throw new Exception("Type " + queryType + " is invalid.");
+		}
 
-    propertiesFile.put("reportal.title", reportal.title);
-    propertiesFile.put("reportal.job.title", jobName);
-    propertiesFile.put("reportal.job.query", queryScript);
-    if (userName != null)
-    {
-      propertiesFile.put("user.to.proxy", "${reportal.execution.user}");
-      propertiesFile.put("reportal.proxy.user", userName);
-    }
+		propertiesFile.put("reportal.title", reportal.title);
+		propertiesFile.put("reportal.job.title", jobName);
+		propertiesFile.put("reportal.job.param", queryParam);
+		propertiesFile.put("reportal.job.query", queryScript);
+		if (userName != null) {
+			propertiesFile.put("user.to.proxy", "${reportal.execution.user}");
+			propertiesFile.put("reportal.proxy.user", userName);
+		}
 
-    type.buildJobFiles(reportal, propertiesFile, jobFile, jobName, queryScript, userName);
+		type.buildJobFiles(reportal, propertiesFile, jobFile, jobName,
+				queryScript, userName);
 
-    propertiesFile.put(CommonJobProperties.JOB_TYPE, type.getJobTypeName());
+		propertiesFile.put(CommonJobProperties.JOB_TYPE, type.getJobTypeName());
 
-    // Order dependency
-    if (dependentJob != null)
-    {
-      propertiesFile.put(CommonJobProperties.DEPENDENCIES, dependentJob);
-    }
+		// Order dependency
+		if (dependentJob != null) {
+			propertiesFile.put(CommonJobProperties.DEPENDENCIES, dependentJob);
+		}
 
-    if (extras != null)
-    {
-      propertiesFile.putAll(extras);
-    }
+		if (extras != null) {
+			propertiesFile.putAll(extras);
+		}
 
-    propertiesFile.storeLocal(jobFile);
-  }
+		propertiesFile.storeLocal(jobFile);
+	}
 
-  public static void createPinotJobAndFiles(Reportal reportal,
-                                            File jobFile,
-                                            String jobName,
-                                            String queryTitle,
-                                            String queryType,
-                                            String queryScript,
-                                            String dependentJob,
-                                            String userName,
-                                            Map<String, String> extras) throws Exception
-  {
+	public static void createPinotJobAndFiles(Reportal reportal, File jobFile,
+			String jobName, String queryTitle, String queryType,
+			String queryScript, String dependentJob, String userName,
+			Map<String, String> extras) throws Exception {
 
-    // Create props for the job
-    Props propertiesFile = new Props();
-    propertiesFile.put("title", queryTitle);
+		// Create props for the job
+		Props propertiesFile = new Props();
+		propertiesFile.put("title", queryTitle);
 
-    ReportalType type = ReportalType.PinotJob;
+		ReportalType type = ReportalType.PinotJob;
 
-    propertiesFile.put("reportal.title", reportal.title);
-    propertiesFile.put("reportal.job.title", jobName);
-    propertiesFile.put("reportal.job.query", queryScript);
+		propertiesFile.put("reportal.title", reportal.title);
+		propertiesFile.put("reportal.job.title", jobName);
+		propertiesFile.put("reportal.job.query", queryScript);
 
-    if (userName != null)
-    {
-      propertiesFile.put("user.to.proxy", "${reportal.execution.user}");
-      propertiesFile.put("reportal.proxy.user", userName);
-    }
-    System.out.println("Reportal Pinot Runner: Initializing");
+		if (userName != null) {
+			propertiesFile.put("user.to.proxy", "${reportal.execution.user}");
+			propertiesFile.put("reportal.proxy.user", userName);
+		}
+		System.out.println("Reportal Pinot Runner: Initializing");
 
-    type.buildJobFiles(reportal, propertiesFile, jobFile, jobName, queryScript, userName);
+		type.buildJobFiles(reportal, propertiesFile, jobFile, jobName,
+				queryScript, userName);
 
-    propertiesFile.put(CommonJobProperties.JOB_TYPE, type.getJobTypeName());
+		propertiesFile.put(CommonJobProperties.JOB_TYPE, type.getJobTypeName());
 
-    // Order dependency
-    if (dependentJob != null)
-    {
-      propertiesFile.put(CommonJobProperties.DEPENDENCIES, dependentJob);
-    }
+		// Order dependency
+		if (dependentJob != null) {
+			propertiesFile.put(CommonJobProperties.DEPENDENCIES, dependentJob);
+		}
 
-    if (extras != null)
-    {
-      propertiesFile.putAll(extras);
-    }
+		if (extras != null) {
+			propertiesFile.putAll(extras);
+		}
 
-    propertiesFile.storeLocal(jobFile);
-  }
+		propertiesFile.storeLocal(jobFile);
+	}
 }
