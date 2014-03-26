@@ -64,8 +64,8 @@ public enum ReportalType {
     public void buildJobFiles(Reportal reportal, Props propertiesFile,
         File jobFile, String jobName, String queryScript,
         String proxyUser) {
-      propertiesFile.put("user.to.proxy", proxyUser);
-      System.out.println("user.to.proxy" + proxyUser);
+//      propertiesFile.put("user.to.proxy", proxyUser);
+//      System.out.println("user.to.proxy" + proxyUser);
     }
 	};
 

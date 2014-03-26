@@ -48,7 +48,9 @@ public class ReportalTypeManager {
 		propertiesFile.put("reportal.job.query", queryScript);
 		if (userName != null) {
 			propertiesFile.put("user.to.proxy", "${reportal.execution.user}");
-			propertiesFile.put("reportal.proxy.user", userName);
+			propertiesFile.put("reportal.proxy.user",
+					"${reportal.execution.user}");
+			// propertiesFile.put("reportal.proxy.user", userName);
 		}
 
 		type.buildJobFiles(reportal, propertiesFile, jobFile, jobName,
@@ -85,7 +87,9 @@ public class ReportalTypeManager {
 
 		if (userName != null) {
 			propertiesFile.put("user.to.proxy", "${reportal.execution.user}");
-			propertiesFile.put("reportal.proxy.user", userName);
+			propertiesFile.put("reportal.proxy.user",
+					"${reportal.execution.user}");
+			// propertiesFile.put("reportal.proxy.user", userName);
 		}
 		System.out.println("Reportal Pinot Runner: Initializing");
 
