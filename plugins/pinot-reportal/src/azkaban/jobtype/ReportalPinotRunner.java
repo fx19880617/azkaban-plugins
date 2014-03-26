@@ -58,6 +58,12 @@ public class ReportalPinotRunner extends ReportalAbstractRunner {
 	@Override
 	protected void runReportal() throws Exception {
 		System.out.println("Reportal Pinot Runner: Initializing");
+
+		if (System.getenv("HADOOP_TOKEN_FILE_LOCATION") != null) {
+			props.put("mapreduce.job.credentials.binary",
+					System.getenv("HADOOP_TOKEN_FILE_LOCATION"));
+		}
+
 		String execId = props.getString(CommonJobProperties.EXEC_ID);
 		for (String key : props.getKeySet()) {
 			System.out.println("key: " + key + ", value: "
@@ -70,13 +76,14 @@ public class ReportalPinotRunner extends ReportalAbstractRunner {
 				.getString("reportal.pinot.optional-pinot-configs");
 		PinotReportalHelper.parseOptionalPinotConfigs(
 				pinotSegmentCreationProps, optionalPinotConfigsString);
-
-		
+		if (System.getenv("HADOOP_TOKEN_FILE_LOCATION") != null) {
+			pinotSegmentCreationProps.put("mapreduce.job.credentials.binary",
+					System.getenv("HADOOP_TOKEN_FILE_LOCATION"));
+		}
 		List<Exception> exceptions = new ArrayList<Exception>();
 
 		// 1. Data Validation
 		runPigJobForDataPreprocessAndValidation(pinotSegmentCreationProps);
-
 		// 2. Pinot Segment Creation
 		String name = "GeneratePinotFormatData";
 
@@ -128,8 +135,6 @@ public class ReportalPinotRunner extends ReportalAbstractRunner {
 		pinotSegmentCreationProps.put("segment.timestamp.columns",
 				props.getString("reportal.pinot.pinot-timestamp-columns"));
 
-	
-
 		// props.put("segment.name.appendDate",
 		// properties.getProperty("segment.name.appendDate"));
 
@@ -149,34 +154,30 @@ public class ReportalPinotRunner extends ReportalAbstractRunner {
 				"push.to.port",
 				props.getString("reportal.pinot.data.push.port."
 						+ props.getString("reportal.pinot.pinot-push-fabric")));
+
+		if (System.getenv("HADOOP_TOKEN_FILE_LOCATION") != null) {
+			pushProps.put("mapreduce.job.credentials.binary",
+					System.getenv("HADOOP_TOKEN_FILE_LOCATION"));
+		}
+
 		PushTarSegmentsJob pushTarSegmentsJob = new PushTarSegmentsJob(
 				"pushGeneratedPinotData", pushProps);
+
 		pushTarSegmentsJob.run();
 
 		if (exceptions.size() > 0) {
 			throw new CompositeException(exceptions);
 		}
 
-		// Configuration conf = new Configuration();
-		// FileSystem fs = FileSystem.get(conf);
-		// Path segmentTarOutputDatePath = new Path(segmentTarOutputPath + "/"
-		// + formattedTime);
-		// if (fs.exists(segmentTarOutputDatePath)) {
-		// fs.delete(segmentTarOutputDatePath, true);
-		// }
-
-		// System.out.println("*** tempSegmentTarOutputPath="
-		// + tempSegmentTarOutputPath + " ***segmentTarOutputDatePath="
-		// + segmentTarOutputDatePath);
-
-		// fs.rename(new Path(tempSegmentTarOutputPath),
-		// segmentTarOutputDatePath);
-
 		System.out.println("Starting pinot retention job...");
 
 		azkaban.common.utils.Props pinotHDFSRetentionProps = new azkaban.common.utils.Props();
 		pinotHDFSRetentionProps.put("path.to.base.dir",
 				props.getString("reportal.pinot.pinot-segment-output-path"));
+		if (System.getenv("HADOOP_TOKEN_FILE_LOCATION") != null) {
+			pinotHDFSRetentionProps.put("mapreduce.job.credentials.binary",
+					System.getenv("HADOOP_TOKEN_FILE_LOCATION"));
+		}
 		pinotHDFSRetentionProps.put("tar.retention.in.days", 24);
 
 		PinotHDFSRetention hdfsRetention = new PinotHDFSRetention(
@@ -191,7 +192,7 @@ public class ReportalPinotRunner extends ReportalAbstractRunner {
 			azkaban.common.utils.Props pinotSegmentCreationProps)
 			throws Exception {
 		PigServer pigServer = new PigServer(ExecType.MAPREDUCE,
-				prop.toProperties());
+				props.toProperties());
 		try {
 			String pigScript = generatePigScript(pinotSegmentCreationProps);
 			System.out
