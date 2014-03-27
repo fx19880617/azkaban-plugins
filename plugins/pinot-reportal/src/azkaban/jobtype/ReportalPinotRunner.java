@@ -44,15 +44,15 @@ import com.linkedin.pinot.hadoop.retention.PinotHDFSRetention;
 
 public class ReportalPinotRunner extends ReportalAbstractRunner {
 
-	Props prop;
+	// Props prop;
 
 	private static final Logger LOGGER = Logger
 			.getLogger(ReportalPinotRunner.class);
 
 	public ReportalPinotRunner(String jobName, Properties props) {
 		super(props);
-		prop = new Props();
-		prop.put(props);
+		// prop = new Props();
+		// prop.put(props);
 	}
 
 	@Override
@@ -66,7 +66,7 @@ public class ReportalPinotRunner extends ReportalAbstractRunner {
 
 		String execId = props.getString(CommonJobProperties.EXEC_ID);
 		for (String key : props.getKeySet()) {
-			System.out.println("key: " + key + ", value: "
+			System.out.println(" props - key: " + key + ", value: "
 					+ props.getString(key));
 		}
 
@@ -138,6 +138,13 @@ public class ReportalPinotRunner extends ReportalAbstractRunner {
 		// props.put("segment.name.appendDate",
 		// properties.getProperty("segment.name.appendDate"));
 
+		for (String key : pinotSegmentCreationProps.getKeySet()) {
+			System.out.println("pinotSegmentCreationProps - ");
+			System.out.println("key:" + key);
+			System.out.println(" value: "
+					+ pinotSegmentCreationProps.getString(key));
+		}
+
 		GeneratePinotData generatePinotData = new GeneratePinotData(name,
 				pinotSegmentCreationProps);
 		generatePinotData.run();
@@ -154,20 +161,28 @@ public class ReportalPinotRunner extends ReportalAbstractRunner {
 				"push.to.port",
 				props.getString("reportal.pinot.data.push.port."
 						+ props.getString("reportal.pinot.pinot-push-fabric")));
-
-		if (System.getenv("HADOOP_TOKEN_FILE_LOCATION") != null) {
-			pushProps.put("mapreduce.job.credentials.binary",
-					System.getenv("HADOOP_TOKEN_FILE_LOCATION"));
-		}
-
 		PushTarSegmentsJob pushTarSegmentsJob = new PushTarSegmentsJob(
 				"pushGeneratedPinotData", pushProps);
-
 		pushTarSegmentsJob.run();
 
 		if (exceptions.size() > 0) {
 			throw new CompositeException(exceptions);
 		}
+
+		// Configuration conf = new Configuration();
+		// FileSystem fs = FileSystem.get(conf);
+		// Path segmentTarOutputDatePath = new Path(segmentTarOutputPath + "/"
+		// + formattedTime);
+		// if (fs.exists(segmentTarOutputDatePath)) {
+		// fs.delete(segmentTarOutputDatePath, true);
+		// }
+
+		// System.out.println("*** tempSegmentTarOutputPath="
+		// + tempSegmentTarOutputPath + " ***segmentTarOutputDatePath="
+		// + segmentTarOutputDatePath);
+
+		// fs.rename(new Path(tempSegmentTarOutputPath),
+		// segmentTarOutputDatePath);
 
 		System.out.println("Starting pinot retention job...");
 
